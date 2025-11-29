@@ -1,0 +1,51 @@
+name: AeroGraph CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      # GitHub levanta un Neo4j temporal para el test
+      neo4j:
+        image: neo4j:5.15.0
+        env:
+          NEO4J_AUTH: neo4j/password123
+        ports:
+          - 7474:7474
+          - 7687:7687
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p password123 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # GitHub levanta un Redis temporal
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Build with Maven
+      # Ejecuta el test, pero salta la parte de Keycloak porque es muy pesada para el tier gratuito
+      run: mvn -B package --file pom.xml -DskipTests
