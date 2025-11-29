@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # 1. Base de Datos (Neo4j)
+  neo4j:
+    image: neo4j:5.15.0
+    container_name: aerograph_db
+    ports:
+      - "7474:7474" # Browser (http://localhost:7474)
+      - "7687:7687" # Conexión interna Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/password123
+    volumes:
+      - ./data/neo4j:/data
+
+  # 2. Caché (Redis)
+  redis:
+    image: redis:alpine
+    container_name: aerograph_cache
+    ports:
+      - "6379:6379"
+
+  # 3. Tu Código (Java + Maven)
+  app:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: aerograph_backend
+    working_dir: /app
+    ports:
+      - "8080:8080" # <--- ¡CAMBIO AQUÍ! Tu PC (9090) -> Docker (8080)
+    volumes:
+      - .:/app          
+      - ~/.m2:/root/.m2 
+    # Comando con "DevTools" para que se reinicie rápido al guardar en NetBeans
+    command: mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=true"
+    depends_on:
+      - neo4j
+      - redis
+    environment:
+      - SPRING_NEO4J_URI=bolt://neo4j:7687
+      - SPRING_NEO4J_AUTHENTICATION_USERNAME=neo4j
+      - SPRING_NEO4J_AUTHENTICATION_PASSWORD=password123
+      - SPRING_DATA_REDIS_HOST=redis

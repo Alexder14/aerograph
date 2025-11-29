@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroGraph ✈️</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        h1 { color: #1a73e8; margin-bottom: 1.5rem; }
+        input { width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background-color: #1a73e8; color: white; border: none; padding: 12px 24px; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; width: 100%; }
+        button:hover { background-color: #1557b0; }
+        #resultado { margin-top: 20px; text-align: left; }
+        .step { background: #e8f0fe; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #1a73e8; }
+        .price { float: right; font-weight: bold; color: #28a745; }
+        .error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>✈️ AeroGraph</h1>
+        <p>Buscador de rutas óptimas</p>
+        
+        <input type="text" id="origen" placeholder="Origen (Ej: MAD)" value="MAD">
+        <input type="text" id="destino" placeholder="Destino (Ej: HND)" value="HND">
+        <br>
+        <button onclick="buscarRuta()">�� Buscar Mejor Ruta</button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function buscarRuta() {
+            const origen = document.getElementById('origen').value;
+            const destino = document.getElementById('destino').value;
+            const divRes = document.getElementById('resultado');
+            
+            divRes.innerHTML = "<p style='text-align:center'>Calculando ruta con IA... 🤖</p>";
+
+            try {
+                // LLAMADA A TU API (BACKEND)
+                const res = await fetch(`/api/vuelos/camino?origen=${origen}&destino=${destino}`);
+                
+                if (!res.ok) throw new Error("No se encontró ruta o error en servidor");
+                
+                const aeropuertos = await res.json();
+                
+                if (aeropuertos.length === 0) {
+                    divRes.innerHTML = "<p class='error'>❌ No existe ruta entre estos destinos.</p>";
+                    return;
+                }
+
+                let html = "<h3>📍 Itinerario:</h3>";
+                aeropuertos.forEach((a, index) => {
+                    let icono = index === aeropuertos.length - 1 ? "🏁" : "🛫";
+                    html += `
+                        <div class="step">
+                            ${icono} <strong>${a.iata}</strong>: ${a.nombre}
+                        </div>
+                    `;
+                });
+                
+                divRes.innerHTML = html;
+
+            } catch (error) {
+                divRes.innerHTML = "<p class='error'>⚠️ Error: " + error.message + "</p>";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+.classpath
+.project
+.settings
+.idea
+*.iml
+.DS_Store
+/nbproject/
+/neo4j_data/
+/data/
+*.log
